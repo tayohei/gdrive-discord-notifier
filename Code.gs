@@ -1,25 +1,66 @@
-// ===== 設定項目 =====
-const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE'; // DiscordのWebhook URLを設定
-const FOLDER_ID = 'YOUR_FOLDER_ID_HERE'; // 監視したいGoogle DriveのフォルダIDを設定
-
 // スクリプトプロパティのキー名
+const DISCORD_WEBHOOK_URL_KEY = 'discordWebhookUrl';
+const FOLDER_ID_KEY = 'folderId';
 const LAST_CHECK_TIME_KEY = 'lastCheckTime';
 
 /**
  * 初回セットアップ用の関数
  * スクリプトエディタで一度実行してください
+ * 
+ * 使い方:
+ * 1. この関数を編集して、WEBHOOK_URLとTARGET_FOLDER_IDを設定
+ * 2. setup()を実行
+ * 3. この関数内の設定値は削除してOK（スクリプトプロパティに保存されます）
  */
 function setup() {
-  const now = new Date().getTime();
-  PropertiesService.getScriptProperties().setProperty(LAST_CHECK_TIME_KEY, now.toString());
-  Logger.log('セットアップ完了: 最終チェック時刻を設定しました');
+  // ===== ここに設定値を入力 =====
+  const WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE';
+  const TARGET_FOLDER_ID = 'YOUR_FOLDER_ID_HERE';
+  // ============================
+  
+  const scriptProperties = PropertiesService.getScriptProperties();
+  
+  // 設定値をスクリプトプロパティに保存
+  scriptProperties.setProperty(DISCORD_WEBHOOK_URL_KEY, WEBHOOK_URL);
+  scriptProperties.setProperty(FOLDER_ID_KEY, TARGET_FOLDER_ID);
+  scriptProperties.setProperty(LAST_CHECK_TIME_KEY, new Date().getTime().toString());
+  
+  Logger.log('✓ 設定を保存しました');
+  Logger.log('  - Discord Webhook URL: ' + WEBHOOK_URL.substring(0, 30) + '...');
+  Logger.log('  - Folder ID: ' + TARGET_FOLDER_ID);
   
   // トリガーを設定(5分ごとに実行)
   ScriptApp.newTrigger('checkNewFiles')
     .timeBased()
     .everyMinutes(5)
     .create();
-  Logger.log('トリガーを作成しました: 5分ごとに実行されます');
+  Logger.log('✓ トリガーを作成しました: 5分ごとに実行されます');
+}
+
+/**
+ * 設定値を表示（確認用）
+ */
+function showConfig() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const webhookUrl = scriptProperties.getProperty(DISCORD_WEBHOOK_URL_KEY);
+  const folderId = scriptProperties.getProperty(FOLDER_ID_KEY);
+  
+  Logger.log('現在の設定:');
+  Logger.log('  - Discord Webhook URL: ' + (webhookUrl ? webhookUrl.substring(0, 30) + '...' : '未設定'));
+  Logger.log('  - Folder ID: ' + (folderId || '未設定'));
+}
+
+/**
+ * 設定値を更新（個別に変更したい場合）
+ */
+function updateWebhookUrl(newUrl) {
+  PropertiesService.getScriptProperties().setProperty(DISCORD_WEBHOOK_URL_KEY, newUrl);
+  Logger.log('Discord Webhook URLを更新しました');
+}
+
+function updateFolderId(newId) {
+  PropertiesService.getScriptProperties().setProperty(FOLDER_ID_KEY, newId);
+  Logger.log('Folder IDを更新しました');
 }
 
 /**
@@ -28,7 +69,15 @@ function setup() {
 function checkNewFiles() {
   try {
     const scriptProperties = PropertiesService.getScriptProperties();
+    const webhookUrl = scriptProperties.getProperty(DISCORD_WEBHOOK_URL_KEY);
+    const folderId = scriptProperties.getProperty(FOLDER_ID_KEY);
     const lastCheckTime = scriptProperties.getProperty(LAST_CHECK_TIME_KEY);
+    
+    // 設定チェック
+    if (!webhookUrl || !folderId) {
+      Logger.log('エラー: 設定が完了していません。setup()を実行してください。');
+      return;
+    }
     
     if (!lastCheckTime) {
       Logger.log('最終チェック時刻が設定されていません。setup()を実行してください。');
@@ -36,7 +85,7 @@ function checkNewFiles() {
     }
     
     const lastCheck = new Date(parseInt(lastCheckTime));
-    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const folder = DriveApp.getFolderById(folderId);
     const files = folder.getFiles();
     const newFiles = [];
     
@@ -59,7 +108,7 @@ function checkNewFiles() {
     
     // 新しいファイルがあればDiscordに通知
     if (newFiles.length > 0) {
-      sendToDiscord(newFiles, folder.getName());
+      sendToDiscord(newFiles, folder.getName(), webhookUrl);
       Logger.log(`${newFiles.length}件の新しいファイルを検出し、通知しました`);
     } else {
       Logger.log('新しいファイルはありませんでした');
@@ -71,14 +120,17 @@ function checkNewFiles() {
   } catch (error) {
     Logger.log('エラーが発生しました: ' + error.toString());
     // エラーもDiscordに通知(オプション)
-    sendErrorToDiscord(error.toString());
+    const webhookUrl = PropertiesService.getScriptProperties().getProperty(DISCORD_WEBHOOK_URL_KEY);
+    if (webhookUrl) {
+      sendErrorToDiscord(error.toString(), webhookUrl);
+    }
   }
 }
 
 /**
  * Discordに通知を送信
  */
-function sendToDiscord(files, folderName) {
+function sendToDiscord(files, folderName, webhookUrl) {
   const embeds = files.map(file => {
     return {
       title: `📄 ${file.name}`,
@@ -120,7 +172,7 @@ function sendToDiscord(files, folderName) {
     muteHttpExceptions: true
   };
   
-  const response = UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
+  const response = UrlFetchApp.fetch(webhookUrl, options);
   
   if (response.getResponseCode() !== 204) {
     Logger.log('Discord通知エラー: ' + response.getContentText());
@@ -130,7 +182,7 @@ function sendToDiscord(files, folderName) {
 /**
  * エラーをDiscordに通知
  */
-function sendErrorToDiscord(errorMessage) {
+function sendErrorToDiscord(errorMessage, webhookUrl) {
   const payload = {
     content: '⚠️ **Google Drive監視スクリプトでエラーが発生しました**',
     embeds: [{
@@ -148,7 +200,7 @@ function sendErrorToDiscord(errorMessage) {
     muteHttpExceptions: true
   };
   
-  UrlFetchApp.fetch(DISCORD_WEBHOOK_URL, options);
+  UrlFetchApp.fetch(webhookUrl, options);
 }
 
 /**
