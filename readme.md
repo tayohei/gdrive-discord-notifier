@@ -1,4 +1,4 @@
-\# Google Drive to Discord Notifier
+# Google Drive to Discord Notifier
 
 
 
@@ -6,45 +6,45 @@ Google Driveの特定のフォルダに新しいファイルが追加された�
 
 
 
-\## 機能
+## 機能
 
 
 
-\- 指定したGoogle Driveフォルダの監視
+- 指定したGoogle Driveフォルダの監視
 
-\- 新規ファイル追加時にDiscordへ自動通知
+- 新規ファイル追加時にDiscordへ自動通知
 
-\- ファイル名、追加者、サイズ、追加日時の表示
+- ファイル名、追加者、サイズ、追加日時の表示
 
-\- ファイルへの直接リンク
+- ファイルへの直接リンク
 
-\- エラー発生時の通知機能
-
-
-
-\## セットアップ
+- エラー発生時の通知機能
 
 
 
-\### 1. Discord Webhook URLの取得
+## セットアップ
 
 
 
-1\. 通知を送りたいDiscordチャンネルを開く
-
-2\. チャンネル設定 → 連携サービス → ウェブフック
-
-3\. 「新しいウェブフック」を作成してURLをコピー
+### 1. Discord Webhook URLの取得
 
 
 
-\### 2. Google DriveフォルダIDの取得
+1. 通知を送りたいDiscordチャンネルを開く
+
+2. チャンネル設定 → 連携サービス → ウェブフック
+
+3. 「新しいウェブフック」を作成してURLをコピー
 
 
 
-1\. 監視したいフォルダをGoogle Driveで開く
+### 2. Google DriveフォルダIDの取得
 
-2\. URLから以下の部分をコピー
+
+
+1. 監視したいフォルダをGoogle Driveで開く
+
+2. URLから以下の部分をコピー
 
 ```
 
@@ -54,47 +54,47 @@ https://drive.google.com/drive/folders/【ここがフォルダID】
 
 
 
-\### 3. Google Apps Scriptの設定
+### 3. Google Apps Scriptの設定
 
 
 
-1\. \[Google Apps Script](https://script.google.com/)を開く
+1. [Google Apps Script](https://script.google.com/)を開く
 
-2\. 新しいプロジェクトを作成
+2. 新しいプロジェクトを作成
 
-3\. `Code.gs`にスクリプトをコピー\&ペースト
+3. `Code.gs`にスクリプトをコピー&ペースト
 
-4\. スクリプト冒頭の設定を変更:
+4. スクリプト冒頭の設定を変更:
 
 ```javascript
 
-const DISCORD\_WEBHOOK\_URL = 'YOUR\_DISCORD\_WEBHOOK\_URL\_HERE';
+const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE';
 
-const FOLDER\_ID = 'YOUR\_FOLDER\_ID\_HERE';
+const FOLDER_ID = 'YOUR_FOLDER_ID_HERE';
 
 ```
 
 
 
-\### 4. 初回実行
+### 4. 初回実行
 
 
 
-1\. 関数一覧から`setup`を選択
+1. 関数一覧から`setup`を選択
 
-2\. 実行ボタンをクリック
+2. 実行ボタンをクリック
 
-3\. 権限の承認を行う（初回のみ）
+3. 権限の承認を行う（初回のみ）
 
-4\. 自動監視が開始されます
-
-
-
-\## カスタマイズ
+4. 自動監視が開始されます
 
 
 
-\### チェック間隔の変更
+## カスタマイズ
+
+
+
+### チェック間隔の変更
 
 
 
@@ -124,7 +124,7 @@ const FOLDER\_ID = 'YOUR\_FOLDER\_ID\_HERE';
 
 
 
-\### トリガーの削除
+### トリガーの削除
 
 
 
@@ -132,17 +132,17 @@ const FOLDER\_ID = 'YOUR\_FOLDER\_ID\_HERE';
 
 
 
-\## 必要な権限
+## 必要な権限
 
 
 
-\- Google Drive: ファイル情報の読み取り
+- Google Drive: ファイル情報の読み取り
 
-\- 外部サービス: Discord Webhookへのアクセス
+- 外部サービス: Discord Webhookへのアクセス
 
 
 
-\## ライセンス
+## ライセンス
 
 
 
@@ -150,13 +150,13 @@ MIT License
 
 
 
-\## 注意事項
+## 注意事項
 
 
 
-\- Google Apps Scriptの実行時間制限に注意してください
+- Google Apps Scriptの実行時間制限に注意してください
 
-\- Discordの1メッセージあたり最大10個のembedまで対応
+- Discordの1メッセージあたり最大10個のembedまで対応
 
-\- 大量のファイルが追加される場合は、チェック間隔の調整を推奨
+- 大量のファイルが追加される場合は、チェック間隔の調整を推奨
 
